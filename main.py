@@ -18,7 +18,7 @@ class Cell:
     
 
     def get_pos_str(self):
-        return f"[{self.x},{self.y}]"
+        return f"[{self.x}, {self.y}]"
     
 
     def __str__(self):
@@ -42,8 +42,12 @@ class ChessStar:
     def __init__(self, start: Cell, finish: Cell):
         self.start = start
         self.finish = finish
-        self.opened = [start]
+        self.opened = [self.start]
         self.closed = []
+
+        self.start.h_cost = self.get_h_cost(self.start)
+        self.start.f_cost = self.start.g_cost + self.start.h_cost
+
         self.step()
 
     def get_g_cost(self, old_cell):
@@ -60,29 +64,35 @@ class ChessStar:
             return
         
         best = min(self.opened, key=lambda cell: cell.f_cost) 
-        self.expand(best)
 
-        next = min(self.opened, key=lambda cell: cell.f_cost) 
-
-        print("Opened: " + ";".join(str(x) for x in self.opened))
-        print("Closed: " +";".join(str(x) for x in self.closed))
-        self.show_board()
-
-
-        if next == self.finish:
+        if best == self.finish:
+            self.closed.append(best)
+            self.opened.remove(best)
             path = []
-            current = next
+            current = best
             while current != None:
                 path.append(current)
                 current = current.parent
 
-            print([str(x) for x in path[::-1]])
+
+            print("Opened: " + "; ".join(str(x) for x in self.opened))
+            print("Closed: " +"; ".join(str(x) for x in self.closed))
+            print("Path:" + "; ".join([str(x) for x in path[::-1]]))
             return
+
+
+        self.expand(best)
+
+        print("Opened: " + "; ".join(str(x) for x in self.opened))
+        print("Closed: " +"; ".join(str(x) for x in self.closed))
+        self.show_board()
+
+
 
         self.step(max_depth-1)
 
     def expand(self, cell):
-        for move in KNIGHT_MOVES[::-1]:
+        for move in KNIGHT_MOVES:
             next_cell = Cell(move[0] + cell.x, move[1] + cell.y, cell)
             if not ChessStar.is_valid(next_cell):
                 continue
@@ -99,9 +109,9 @@ class ChessStar:
                     if next_cell == existing:
                         if next_cell.f_cost < existing.f_cost:
                             self.opened.remove(existing)
-                            self.opened.insert(0, next_cell)
+                            self.opened.append(next_cell)
             else:
-                self.opened.insert(0, next_cell)
+                self.opened.append(next_cell)
 
         self.opened.remove(cell)
         self.closed.append(cell)
